@@ -1,10 +1,12 @@
 const request = require('supertest');
 const app = require('../../app');
 const { mongoConnect, mongoDisconnect } = require('../../services/mongo');
+const { loadPlanetsData } = require('../../models/planets/planets.model');
 
 describe('Launches API', () => {
   beforeAll(async () => {
     await mongoConnect();
+    await loadPlanetsData();
   });
 
   afterAll(async () => {
@@ -49,7 +51,12 @@ describe('Launches API', () => {
     });
 
     test('It should catch missing required properties', async () => {
-      const response = await request(app).post('/v1/launches').send(noDateTestLaunch).expect(400);
+      const response = await request(app)
+        .post('/v1/launches')
+        .send(noDateTestLaunch)
+        .expect(400)
+        .expect('Content-Type', /json/);
+
       expect(response.body).toStrictEqual({ error: 'Missing required launch property' });
     });
 
@@ -62,7 +69,8 @@ describe('Launches API', () => {
           target: 'Kepler-442 b',
           launchDate: 'FalseDate',
         })
-        .expect(400);
+        .expect(400)
+        .expect('Content-Type', /json/);
 
       expect(response.body).toStrictEqual({ error: 'Invalid launch date' });
     });
